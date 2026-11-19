@@ -210,8 +210,8 @@ export interface PullRequest {
 export class GitForgeStore {
   private repos = new Map<string, Repository>(); // repoName -> Repository (owner is fixed user)
   private repoIdCounter = 1;
-  private userId = 1;
-  private fixedLogin = 'makefun-user';
+  private userId = 1000;
+  private fixedLogin = 'adaiversen';
 
   constructor() {}
 
@@ -224,16 +224,16 @@ export class GitForgeStore {
     return {
       login: this.fixedLogin,
       id: this.userId,
-      node_id: 'MDQ6VXNlcjE=',
+      node_id: 'MDQ6VXNlcjEwMDA=',
       avatar_url: `https://avatars.githubusercontent.com/u/${this.userId}?v=4`,
       html_url: `https://github.com/${this.fixedLogin}`,
       type: 'User',
       site_admin: false,
-      name: 'MakeFun User',
+      name: 'ada iversen',
       company: null,
       blog: '',
       location: null,
-      email: 'user@example.com',
+      email: 'adaiversen@example.invalid',
       hireable: null,
       bio: null,
       twitter_username: null,
@@ -250,7 +250,7 @@ export class GitForgeStore {
     return {
       login: this.fixedLogin,
       id: this.userId,
-      node_id: 'MDQ6VXNlcjE=',
+      node_id: 'MDQ6VXNlcjEwMDA=',
       avatar_url: `https://avatars.githubusercontent.com/u/${this.userId}?v=4`,
       gravatar_id: '',
       url: `https://api.github.com/users/${this.fixedLogin}`,
