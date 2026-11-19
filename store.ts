@@ -689,6 +689,27 @@ export class GitForgeStore {
     };
   }
 
+  createRef(owner: string, repoName: string, ref: string, sha: string): { ref: string; object: { sha: string; type: string; url: string } } | { error: string; status: number } {
+    const repo = this.getRepo(owner, repoName);
+    if (!repo) return { error: 'Repository not found', status: 404 };
+    if (!repo.objects.has(sha)) {
+      return { error: 'Commit not found', status: 422 };
+    }
+    if (!ref.startsWith('refs/heads/')) {
+      return { error: 'Invalid ref', status: 422 };
+    }
+    const branchName = ref.substring('refs/heads/'.length);
+    repo.branches.set(branchName, sha);
+    return {
+      ref,
+      object: {
+        sha,
+        type: 'commit',
+        url: `https://api.github.com/repos/${repo.full_name}/git/commits/${sha}`
+      }
+    };
+  }
+
   listCommits(owner: string, repoName: string, branchName?: string): CommitInfo[] | undefined {
     const repo = this.getRepo(owner, repoName);
     if (!repo) return undefined;

@@ -189,6 +189,27 @@ export function createApp(): http.Server {
         }
       }
 
+      if (subpath === 'git/refs') {
+        if (method === 'POST') {
+          let body: any;
+          try {
+            body = await parseBody();
+          } catch {
+            return sendError(400, 'Malformed JSON');
+          }
+          const ref = body.ref;
+          const sha = body.sha;
+          if (!ref || !sha) {
+            return sendError(422, 'Ref and sha are required');
+          }
+          const result = store.createRef(owner, repoName, ref, sha);
+          if ('error' in result) {
+            return sendError(result.status, result.error);
+          }
+          return sendJson(201, result);
+        }
+      }
+
       const branchMatch = subpath.match(/^branches\/(.+)$/);
       if (branchMatch) {
         const branchName = decodeURIComponent(branchMatch[1]);
