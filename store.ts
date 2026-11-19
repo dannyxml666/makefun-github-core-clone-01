@@ -344,9 +344,10 @@ export class GitForgeStore {
 
   createCommit(repo: Repository, treeSha: string, parentShas: string[], message: string): string {
     const now = this.getTrialNow();
-    // format date as epoch + timezone or standard git author line format
-    const authorLine = `author ${this.fixedLogin} <user@example.com> 1700000000 +0000`;
-    const committerLine = `committer ${this.fixedLogin} <user@example.com> 1700000000 +0000`;
+    const epochSecs = Math.floor(new Date(now).getTime() / 1000);
+    const dateStr = `${isNaN(epochSecs) ? 1700000000 : epochSecs} +0000`;
+    const authorLine = `author ${this.fixedLogin} <user@example.com> ${dateStr}`;
+    const committerLine = `committer ${this.fixedLogin} <user@example.com> ${dateStr}`;
     let commitContentStr = `tree ${treeSha}\n`;
     for (const p of parentShas) {
       commitContentStr += `parent ${p}\n`;
@@ -424,7 +425,12 @@ export class GitForgeStore {
   getCommitTree(repo: Repository, commitSha: string): string {
     const obj = repo.objects.get(commitSha);
     if (!obj) return '';
-    const text = Buffer.from(obj).toString('utf-8');
+    let nullIdx = 0;
+    while (nullIdx < obj.length && obj[nullIdx] !== 0) {
+      nullIdx++;
+    }
+    const contentBytes = nullIdx < obj.length ? obj.subarray(nullIdx + 1) : obj;
+    const text = Buffer.from(contentBytes).toString('utf-8');
     const lines = text.split('\n');
     for (const line of lines) {
       if (line.startsWith('tree ')) {
@@ -437,7 +443,12 @@ export class GitForgeStore {
   getCommitParents(repo: Repository, commitSha: string): string[] {
     const obj = repo.objects.get(commitSha);
     if (!obj) return [];
-    const text = Buffer.from(obj).toString('utf-8');
+    let nullIdx = 0;
+    while (nullIdx < obj.length && obj[nullIdx] !== 0) {
+      nullIdx++;
+    }
+    const contentBytes = nullIdx < obj.length ? obj.subarray(nullIdx + 1) : obj;
+    const text = Buffer.from(contentBytes).toString('utf-8');
     const lines = text.split('\n');
     const parents: string[] = [];
     for (const line of lines) {
