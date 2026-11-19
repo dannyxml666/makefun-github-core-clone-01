@@ -552,7 +552,9 @@ export class GitForgeStore {
       html_url: `https://github.com/${repo.full_name}/blob/${branchName}/${filePath}`,
       git_url: `https://api.github.com/repos/${repo.full_name}/git/blobs/${newBlobSha}`,
       download_url: `https://raw.githubusercontent.com/${repo.full_name}/${branchName}/${filePath}`,
-      type: 'file'
+      type: 'file',
+      content: contentBase64,
+      encoding: 'base64'
     };
 
     return {
