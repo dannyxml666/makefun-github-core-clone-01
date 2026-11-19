@@ -298,7 +298,15 @@ export function createApp(): http.Server {
 
       if (subpath === 'issues') {
         if (method === 'GET') {
-          return sendJson(200, store.listIssues(owner, repoName));
+          const state = urlObj.searchParams.get('state') || 'open';
+          const sort = urlObj.searchParams.get('sort') || 'created';
+          const direction = urlObj.searchParams.get('direction') || 'desc';
+          const page = parseInt(urlObj.searchParams.get('page') || '1', 10);
+          const perPage = parseInt(urlObj.searchParams.get('per_page') || '30', 10);
+
+          const issues = store.listIssues(owner, repoName, { state, sort, direction, page, perPage });
+          if (!issues) return sendError(404, 'Repository not found');
+          return sendJson(200, issues);
         }
         if (method === 'POST') {
           let body: any;
@@ -322,6 +330,23 @@ export function createApp(): http.Server {
           const issue = store.getIssue(owner, repoName, num);
           if (!issue) return sendError(404, 'Issue not found');
           return sendJson(200, issue);
+        }
+        if (method === 'PATCH' || method === 'PUT') {
+          let body: any;
+          try {
+            body = await parseBody();
+          } catch {
+            return sendError(400, 'Malformed JSON');
+          }
+          const res = store.updateIssue(owner, repoName, num, {
+            state: body.state,
+            title: body.title,
+            body: body.body
+          });
+          if ('error' in res) {
+            return sendError(res.status, res.error);
+          }
+          return sendJson(200, res);
         }
       }
 

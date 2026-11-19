@@ -784,10 +784,72 @@ export class GitForgeStore {
   }
 
   // Issues
-  listIssues(owner: string, repoName: string): Issue[] | undefined {
+  listIssues(
+    owner: string,
+    repoName: string,
+    options?: {
+      state?: string;
+      sort?: string;
+      direction?: string;
+      page?: number;
+      perPage?: number;
+    }
+  ): Issue[] | undefined {
     const repo = this.getRepo(owner, repoName);
     if (!repo) return undefined;
-    return Array.from(repo.issues.values());
+
+    let issues = Array.from(repo.issues.values());
+
+    const state = options?.state || 'open';
+    if (state !== 'all') {
+      issues = issues.filter(issue => issue.state === state);
+    }
+
+    const direction = options?.direction || 'desc';
+    issues.sort((a, b) => {
+      const timeA = new Date(a.created_at).getTime();
+      const timeB = new Date(b.created_at).getTime();
+      if (timeA !== timeB) {
+        return direction === 'asc' ? timeA - timeB : timeB - timeA;
+      }
+      return direction === 'asc' ? a.number - b.number : b.number - a.number;
+    });
+
+    const page = Math.max(1, options?.page || 1);
+    const perPage = Math.max(1, options?.perPage || 30);
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+
+    return issues.slice(start, end);
+  }
+
+  updateIssue(
+    owner: string,
+    repoName: string,
+    number: number,
+    updates: { state?: 'open' | 'closed'; title?: string; body?: string | null }
+  ): Issue | { error: string; status: number } {
+    const repo = this.getRepo(owner, repoName);
+    if (!repo) return { error: 'Repository not found', status: 404 };
+    const issue = repo.issues.get(number);
+    if (!issue) return { error: 'Issue not found', status: 404 };
+
+    const now = this.getTrialNow();
+    if (updates.state !== undefined) {
+      if (updates.state !== 'open' && updates.state !== 'closed') {
+        return { error: 'Invalid state', status: 422 };
+      }
+      issue.state = updates.state;
+      issue.closed_at = updates.state === 'closed' ? now : null;
+    }
+    if (updates.title !== undefined) {
+      issue.title = updates.title;
+    }
+    if (updates.body !== undefined) {
+      issue.body = updates.body;
+    }
+    issue.updated_at = now;
+    return issue;
   }
 
   createIssue(owner: string, repoName: string, title: string, body: string | null, labelNames: string[] = []): Issue | { error: string; status: number } {
