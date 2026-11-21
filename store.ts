@@ -309,10 +309,7 @@ export class GitForgeStore {
       pulls: new Map<number, PullRequest>()
     };
 
-    // Initialize empty root commit on main branch so repository has a default branch and commit
-    const emptyTreeSha = this.storeObject(repo, 'tree', new Uint8Array(0));
-    const commitSha = this.createCommit(repo, emptyTreeSha, [], 'Initial commit');
-    repo.branches.set('main', commitSha);
+    // A new repository starts unborn: no refs and no objects until the first push or content write.
 
     this.repos.set(name, repo);
     return repo;

@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { store } from './store.ts';
+import { handleGitRoutes } from './git-routes.ts';
 
 let requestIdCounter = 1;
 
@@ -59,6 +60,11 @@ export function createApp(): http.Server {
     // Clean seam check for future GraphQL / MCP
     if (pathname.startsWith('/api/graphql') || pathname === '/mcp' || pathname.startsWith('/mcp/')) {
       return sendError(404, 'Not Found');
+    }
+
+    // Git smart HTTP routes (no token required; must run before the auth check)
+    if (await handleGitRoutes(req, res, pathname, method, Object.fromEntries(urlObj.searchParams))) {
+      return;
     }
 
     // Authentication check for all /api/v3 routes
